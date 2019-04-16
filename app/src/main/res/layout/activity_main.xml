@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity">
+
+    <FrameLayout
+            android:layout_margin="16dp"
+            android:layout_above="@+id/llSettingBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <com.rocket.testtask.PixelImage
+                android:layout_gravity="center"
+                android:id="@+id/pixelImage"
+                android:layout_width="0dp"
+                android:layout_height="0dp"/>
+
+    </FrameLayout>
+
+    <LinearLayout
+            android:id="@+id/llSettingBar"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            android:weightSum="3"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatEditText
+                android:inputType="number"
+                android:gravity="center"
+                android:hint="width"
+                android:layout_weight="1"
+                android:id="@+id/etWidth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+                android:gravity="center"
+                android:text="X"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.AppCompatEditText
+                android:inputType="number"
+                android:gravity="center"
+                android:hint="height"
+                android:layout_weight="1"
+                android:id="@+id/etHeight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+                android:text="generate"
+                android:gravity="center"
+                android:id="@+id/btGenerate"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
