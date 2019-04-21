@@ -5,6 +5,8 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import java.util.concurrent.Executors
+import kotlin.random.Random
 
 
 class PixelImage : View {
@@ -21,26 +23,35 @@ class PixelImage : View {
     private val pathRhombus = Path()
     private val pathSquare = Path()
 
+    private var visualization = Visualization.Queue
+
     private var cachedBitmap: Bitmap? = null
+
+    private var canvas: Canvas? = null
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
         if (cachedBitmap == null) {
-            fillPaint.style = Paint.Style.FILL
-            fillPaint.color = Color.WHITE
-            canvas.drawPaint(fillPaint)
-
-            drawPaint.style = Paint.Style.FILL
-            drawPaint.color = Color.BLACK
-
-            drawTriangle(canvas, drawPaint, 100, 100, 100)
-            drawRhombus(canvas, drawPaint, 300, 100, 100)
-            drawSquare(canvas, drawPaint, 500, 100, 100)
-
+            generate(canvas)
         } else {
             canvas.drawBitmap(cachedBitmap!!, 0F, 0F, null)
         }
+    }
+
+    private fun generate(canvas: Canvas) {
+        fillPaint.style = Paint.Style.FILL
+        fillPaint.color = Color.WHITE
+        canvas.drawPaint(fillPaint)
+
+        drawPaint.style = Paint.Style.FILL
+        drawPaint.color = Color.BLACK
+
+        drawTriangle(canvas, drawPaint, 100, 100, 100)
+        drawRhombus(canvas, drawPaint, 170, 150, 100)
+        drawSquare(canvas, drawPaint, 250, 120, 100)
+        drawTriangle(canvas, drawPaint, 170, 200, 100)
+        drawSquare(canvas, drawPaint, 250, 270, 100)
     }
 
     private fun drawTriangle(canvas: Canvas, paint: Paint, x: Int, y: Int, width: Int) {
@@ -81,10 +92,17 @@ class PixelImage : View {
         canvas.drawPath(pathSquare, paint)
     }
 
-    fun setSize(newHeight: Int, newWidth: Int) {
+    private fun setSize(newHeight: Int, newWidth: Int) {
         this.layoutParams.width = newWidth
         this.layoutParams.height = newHeight
         invalidate()
+    }
+
+    fun init(newHeight: Int, newWidth: Int, visualization: Visualization) {
+        setSize(newHeight, newWidth)
+        this.visualization = visualization
+        if (canvas != null)
+            generate(canvas!!)
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -93,28 +111,84 @@ class PixelImage : View {
             cachedBitmap = loadBitmap()
 
             val pixel = cachedBitmap?.getPixel(event.x.toInt(), event.y.toInt())
-            if (pixel == Color.BLACK)
-                reDrawRecursive(FractalNode(event.x.toInt(), event.y.toInt()), true)
+            if (pixel == Color.BLACK) {
+                val graph = HashSet<PixelNode>()
+                val root = PixelNode(event.x.toInt(), event.y.toInt(), true)
+                graph.add(root)
+
+                addNodeRecursive(graph, root)
+
+                when (visualization) {
+                    Visualization.Queue -> drawQueue(graph)
+                    Visualization.Random -> drawRandom(graph)
+                }
+            }
         }
         return true
     }
 
-    private fun reDrawRecursive(current: FractalNode, directionX: Boolean): FractalNode {
-        cachedBitmap?.setPixel(current.x, current.y, Color.WHITE)
-        invalidate()
+    private val drawExecutor = Executors.newSingleThreadExecutor()
+    private fun drawQueue(queue: HashSet<PixelNode>) {
+        for (node in queue) {
+            drawExecutor.submit {
+                Thread.sleep(0, 1)
+                cachedBitmap?.setPixel(node.x, node.y, Color.WHITE)
+                invalidate()
+            }
+        }
+    }
 
-        if (directionX) {
+    private fun drawRandom(graph: HashSet<PixelNode>) {
+        val list = graph.toMutableList()
+        for (i in 0 until graph.size) {
+            drawExecutor.submit {
+                Thread.sleep(0, 1)
+                val random = Random.nextInt(list.size)
+                cachedBitmap?.setPixel(list[random].x, list[random].y, Color.WHITE)
+                list.removeAt(random)
+                invalidate()
+            }
+        }
+    }
+
+    private fun addNodeRecursive(
+        pixels: HashSet<PixelNode>,
+        current: PixelNode
+    ) {
+        if (current.childDirectionX) {
             if (cachedBitmap?.getPixel(current.x + 1, current.y) == Color.BLACK)
-                current.nextRight = reDrawRecursive(FractalNode(current.x + 1, current.y), !directionX)
+                addNode(current, pixels, current.x + 1, current.y) { newNode: PixelNode ->
+                    current.nextRight = newNode
+                }
             if (cachedBitmap?.getPixel(current.x - 1, current.y) == Color.BLACK)
-                current.nextLeft = reDrawRecursive(FractalNode(current.x - 1, current.y), !directionX)
+                addNode(current, pixels, current.x - 1, current.y) { newNode: PixelNode ->
+                    current.nextLeft = newNode
+                }
         } else {
             if (cachedBitmap?.getPixel(current.x, current.y + 1) == Color.BLACK)
-                current.nextRight = reDrawRecursive(FractalNode(current.x, current.y + 1), !directionX)
+                addNode(current, pixels, current.x, current.y + 1) { newNode: PixelNode ->
+                    current.nextRight = newNode
+                }
             if (cachedBitmap?.getPixel(current.x, current.y - 1) == Color.BLACK)
-                current.nextLeft = reDrawRecursive(FractalNode(current.x - 1, current.y - 1), !directionX)
+                addNode(current, pixels, current.x, current.y - 1) { newNode: PixelNode ->
+                    current.nextLeft = newNode
+                }
         }
-        return current
+    }
+
+    private fun addNode(
+        current: PixelNode,
+        pixels: HashSet<PixelNode>,
+        x: Int,
+        y: Int,
+        add: (PixelNode) -> Unit
+    ) {
+        val node = PixelNode(x, y, !current.childDirectionX)
+        if (!pixels.contains(node)) {
+            pixels.add(node)
+            add.invoke(node)
+            addNodeRecursive(pixels, node)
+        }
     }
 
     private fun loadBitmap(): Bitmap {
