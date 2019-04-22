@@ -40,18 +40,27 @@ class PixelImage : View {
     }
 
     private fun generate(canvas: Canvas) {
-        fillPaint.style = Paint.Style.FILL
-        fillPaint.color = Color.WHITE
-        canvas.drawPaint(fillPaint)
+//        fillPaint.style = Paint.Style.FILL
+//        fillPaint.color = Color.WHITE
+//        canvas.drawPaint(fillPaint)
+//
+//        drawPaint.style = Paint.Style.FILL
+//        drawPaint.color = Color.BLACK
+//
+//        drawTriangle(canvas, drawPaint, 100, 100, 100)
+//        drawRhombus(canvas, drawPaint, 170, 150, 100)
+//        drawSquare(canvas, drawPaint, 250, 120, 100)
+//        drawTriangle(canvas, drawPaint, 170, 200, 100)
+//        drawSquare(canvas, drawPaint, 250, 270, 100)
 
-        drawPaint.style = Paint.Style.FILL
-        drawPaint.color = Color.BLACK
+        for (x in 0..canvas.width) {
+            for (y in 0..canvas.height) {
+                if (Random.nextFloat() > .2) {
+                    canvas.drawPoint(x.toFloat(), y.toFloat(), drawPaint)
+                }
+            }
+        }
 
-        drawTriangle(canvas, drawPaint, 100, 100, 100)
-        drawRhombus(canvas, drawPaint, 170, 150, 100)
-        drawSquare(canvas, drawPaint, 250, 120, 100)
-        drawTriangle(canvas, drawPaint, 170, 200, 100)
-        drawSquare(canvas, drawPaint, 250, 270, 100)
     }
 
     private fun drawTriangle(canvas: Canvas, paint: Paint, x: Int, y: Int, width: Int) {
@@ -156,20 +165,24 @@ class PixelImage : View {
         current: PixelNode
     ) {
         if (current.childDirectionX) {
-            if (cachedBitmap?.getPixel(current.x + 1, current.y) == Color.BLACK)
+            if (cachedBitmap?.height!! < current.x + 1
+                && cachedBitmap?.getPixel(current.x + 1, current.y) == Color.BLACK
+            )
                 addNode(current, pixels, current.x + 1, current.y) { newNode: PixelNode ->
                     current.nextRight = newNode
                 }
-            if (cachedBitmap?.getPixel(current.x - 1, current.y) == Color.BLACK)
+            if (current.x > 0 && cachedBitmap?.getPixel(current.x - 1, current.y) == Color.BLACK)
                 addNode(current, pixels, current.x - 1, current.y) { newNode: PixelNode ->
                     current.nextLeft = newNode
                 }
         } else {
-            if (cachedBitmap?.getPixel(current.x, current.y + 1) == Color.BLACK)
+            if (cachedBitmap?.width!! < current.y + 1
+                && cachedBitmap?.getPixel(current.x, current.y + 1) == Color.BLACK
+            )
                 addNode(current, pixels, current.x, current.y + 1) { newNode: PixelNode ->
                     current.nextRight = newNode
                 }
-            if (cachedBitmap?.getPixel(current.x, current.y - 1) == Color.BLACK)
+            if (current.y > 0 && cachedBitmap?.getPixel(current.x, current.y - 1) == Color.BLACK)
                 addNode(current, pixels, current.x, current.y - 1) { newNode: PixelNode ->
                     current.nextLeft = newNode
                 }
