@@ -1,8 +1,12 @@
 package com.rocket.testtask
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import java.util.concurrent.Executors
@@ -16,22 +20,14 @@ class PixelImage : View {
 
     }
 
-    private val fillPaint = Paint()
     private val drawPaint = Paint()
 
-    private val pathTriangle = Path()
-    private val pathRhombus = Path()
-    private val pathSquare = Path()
-
-    private var visualization = Visualization.Queue
+    private var speed = 0
 
     private var cachedBitmap: Bitmap? = null
 
-    private var canvas: Canvas? = null
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
         if (cachedBitmap == null) {
             generate(canvas)
         } else {
@@ -40,19 +36,6 @@ class PixelImage : View {
     }
 
     private fun generate(canvas: Canvas) {
-//        fillPaint.style = Paint.Style.FILL
-//        fillPaint.color = Color.WHITE
-//        canvas.drawPaint(fillPaint)
-//
-//        drawPaint.style = Paint.Style.FILL
-//        drawPaint.color = Color.BLACK
-//
-//        drawTriangle(canvas, drawPaint, 100, 100, 100)
-//        drawRhombus(canvas, drawPaint, 170, 150, 100)
-//        drawSquare(canvas, drawPaint, 250, 120, 100)
-//        drawTriangle(canvas, drawPaint, 170, 200, 100)
-//        drawSquare(canvas, drawPaint, 250, 270, 100)
-
         for (x in 0..canvas.width) {
             for (y in 0..canvas.height) {
                 if (Random.nextFloat() > .2) {
@@ -60,45 +43,11 @@ class PixelImage : View {
                 }
             }
         }
-
     }
 
-    private fun drawTriangle(canvas: Canvas, paint: Paint, x: Int, y: Int, width: Int) {
-        val halfWidth: Float = width.toFloat() / 2
-
-        pathTriangle.moveTo(x.toFloat(), y - halfWidth)
-        pathTriangle.lineTo(x - halfWidth, y + halfWidth)
-        pathTriangle.lineTo(x + halfWidth, y + halfWidth)
-        pathTriangle.lineTo(x.toFloat(), y - halfWidth)
-        pathTriangle.close()
-
-        canvas.drawPath(pathTriangle, paint)
-    }
-
-    private fun drawRhombus(canvas: Canvas, paint: Paint, x: Int, y: Int, width: Int) {
-        val halfWidth = width / 2
-
-        pathRhombus.moveTo(x.toFloat(), (y + halfWidth).toFloat())
-        pathRhombus.lineTo((x - halfWidth).toFloat(), y.toFloat())
-        pathRhombus.lineTo(x.toFloat(), (y - halfWidth).toFloat())
-        pathRhombus.lineTo((x + halfWidth).toFloat(), y.toFloat())
-        pathRhombus.lineTo(x.toFloat(), (y + halfWidth).toFloat())
-        pathRhombus.close()
-
-        canvas.drawPath(pathRhombus, paint)
-    }
-
-    private fun drawSquare(canvas: Canvas, paint: Paint, x: Int, y: Int, width: Int) {
-        val halfWidth = width / 2
-
-        pathSquare.moveTo((x - halfWidth).toFloat(), (y - halfWidth).toFloat())
-        pathSquare.lineTo((x - halfWidth).toFloat(), y.toFloat() + halfWidth)
-        pathSquare.lineTo(x.toFloat() + halfWidth, y.toFloat() + halfWidth)
-        pathSquare.lineTo(x.toFloat() + halfWidth, (y - halfWidth).toFloat())
-        pathSquare.lineTo((x - halfWidth).toFloat(), (y - halfWidth).toFloat())
-        pathSquare.close()
-
-        canvas.drawPath(pathSquare, paint)
+    fun init(newHeight: Int, newWidth: Int) {
+        setSize(newHeight, newWidth)
+        cachedBitmap = loadBitmap()
     }
 
     private fun setSize(newHeight: Int, newWidth: Int) {
@@ -107,100 +56,71 @@ class PixelImage : View {
         invalidate()
     }
 
-    fun init(newHeight: Int, newWidth: Int, visualization: Visualization) {
-        setSize(newHeight, newWidth)
-        this.visualization = visualization
-        if (canvas != null)
-            generate(canvas!!)
+    fun setSpeed(speed: Int) {
+        this.speed = speed * 10
     }
+
+    private val drawExecutor = Executors.newSingleThreadExecutor()
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event?.action == MotionEvent.ACTION_UP) {
 
-            cachedBitmap = loadBitmap()
-
             val pixel = cachedBitmap?.getPixel(event.x.toInt(), event.y.toInt())
             if (pixel == Color.BLACK) {
-                val graph = HashSet<PixelNode>()
                 val root = PixelNode(event.x.toInt(), event.y.toInt(), true)
-                graph.add(root)
+                val list = ArrayList<PixelNode>()
+                runDraw(root, list)
 
-                addNodeRecursive(graph, root)
+                for (item in list) {
+                    cachedBitmap?.setPixel(item.x, item.y, Color.BLACK)
+                }
 
-                when (visualization) {
-                    Visualization.Queue -> drawQueue(graph)
-                    Visualization.Random -> drawRandom(graph)
+                val localSpeed = 1000 - speed.toLong()
+                for (item in list) {
+                    drawExecutor.submit {
+                        Thread.sleep(localSpeed)
+                        cachedBitmap?.setPixel(item.x, item.y, Color.WHITE)
+                        invalidate()
+                    }
                 }
             }
         }
         return true
     }
 
-    private val drawExecutor = Executors.newSingleThreadExecutor()
-    private fun drawQueue(queue: HashSet<PixelNode>) {
-        for (node in queue) {
-            drawExecutor.submit {
-                Thread.sleep(0, 1)
-                cachedBitmap?.setPixel(node.x, node.y, Color.WHITE)
-                invalidate()
-            }
-        }
-    }
-
-    private fun drawRandom(graph: HashSet<PixelNode>) {
-        val list = graph.toMutableList()
-        for (i in 0 until graph.size) {
-            drawExecutor.submit {
-                Thread.sleep(0, 1)
-                val random = Random.nextInt(list.size)
-                cachedBitmap?.setPixel(list[random].x, list[random].y, Color.WHITE)
-                list.removeAt(random)
-                invalidate()
-            }
-        }
+    private fun runDraw(
+        current: PixelNode,
+        list: ArrayList<PixelNode>
+    ) {
+        addNodeRecursive(current, list)
     }
 
     private fun addNodeRecursive(
-        pixels: HashSet<PixelNode>,
-        current: PixelNode
-    ) {
-        if (current.childDirectionX) {
-            if (cachedBitmap?.height!! < current.x + 1
-                && cachedBitmap?.getPixel(current.x + 1, current.y) == Color.BLACK
-            )
-                addNode(current, pixels, current.x + 1, current.y) { newNode: PixelNode ->
-                    current.nextRight = newNode
-                }
-            if (current.x > 0 && cachedBitmap?.getPixel(current.x - 1, current.y) == Color.BLACK)
-                addNode(current, pixels, current.x - 1, current.y) { newNode: PixelNode ->
-                    current.nextLeft = newNode
-                }
-        } else {
-            if (cachedBitmap?.width!! < current.y + 1
-                && cachedBitmap?.getPixel(current.x, current.y + 1) == Color.BLACK
-            )
-                addNode(current, pixels, current.x, current.y + 1) { newNode: PixelNode ->
-                    current.nextRight = newNode
-                }
-            if (current.y > 0 && cachedBitmap?.getPixel(current.x, current.y - 1) == Color.BLACK)
-                addNode(current, pixels, current.x, current.y - 1) { newNode: PixelNode ->
-                    current.nextLeft = newNode
-                }
-        }
-    }
-
-    private fun addNode(
         current: PixelNode,
-        pixels: HashSet<PixelNode>,
-        x: Int,
-        y: Int,
-        add: (PixelNode) -> Unit
+        list: ArrayList<PixelNode>
     ) {
-        val node = PixelNode(x, y, !current.childDirectionX)
-        if (!pixels.contains(node)) {
-            pixels.add(node)
-            add.invoke(node)
-            addNodeRecursive(pixels, node)
+
+        list.add(current)
+        cachedBitmap?.setPixel(current.x, current.y, Color.WHITE)
+
+        if (current.x + 1 < cachedBitmap?.width!!
+            && cachedBitmap?.getPixel(current.x + 1, current.y) == Color.BLACK
+        ) {
+            runDraw(PixelNode(current.x + 1, current.y, !current.childDirectionX), list)
+        }
+
+        if (current.x > 0 && cachedBitmap?.getPixel(current.x - 1, current.y) == Color.BLACK) {
+            runDraw(PixelNode(current.x - 1, current.y, !current.childDirectionX), list)
+        }
+
+        if (current.y + 1 < cachedBitmap?.height!!
+            && cachedBitmap?.getPixel(current.x, current.y + 1) == Color.BLACK
+        ) {
+            runDraw(PixelNode(current.x, current.y + 1, !current.childDirectionX), list)
+        }
+
+        if (current.y > 0 && cachedBitmap?.getPixel(current.x, current.y - 1) == Color.BLACK) {
+            runDraw(PixelNode(current.x, current.y - 1, !current.childDirectionX), list)
         }
     }
 

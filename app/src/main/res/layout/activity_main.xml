@@ -9,7 +9,7 @@
     <FrameLayout
             android:id="@+id/pixelImageContainer"
             android:layout_margin="16dp"
-            android:layout_above="@+id/llSettingBar"
+            android:layout_above="@+id/speed"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -22,7 +22,7 @@
             android:layout_marginBottom="16dp"
             android:weightSum="3"
             android:orientation="horizontal"
-            android:layout_above="@+id/rg"
+            android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -60,28 +60,13 @@
 
     </LinearLayout>
 
-    <RadioGroup
-            android:id="@+id/rg"
+    <SeekBar
+            android:id="@+id/speed"
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginBottom="16dp"
-            android:layout_alignParentBottom="true"
+            android:layout_above="@+id/llSettingBar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-        <RadioButton
-                android:id="@+id/queue"
-                android:checked="true"
-                android:text="queue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-        <RadioButton
-                android:id="@+id/random"
-                android:text="random"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-    </RadioGroup>
+            android:layout_height="wrap_content"/>
 
 </RelativeLayout>
