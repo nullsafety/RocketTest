@@ -5,9 +5,6 @@ data class PixelNode(
     val y: Int,
     val childDirectionX: Boolean
 ) {
-    var nextLeft: PixelNode? = null
-    var nextRight: PixelNode? = null
-
     override fun equals(other: Any?): Boolean {
         return when {
             other == null -> false

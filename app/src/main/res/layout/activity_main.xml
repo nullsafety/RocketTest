@@ -11,9 +11,7 @@
             android:layout_margin="16dp"
             android:layout_above="@+id/speed"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-    </FrameLayout>
+            android:layout_height="match_parent"/>
 
     <LinearLayout
             android:id="@+id/llSettingBar"
@@ -26,14 +24,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/etWidth"
-                android:inputType="number"
-                android:gravity="center"
+        <com.google.android.material.textfield.TextInputLayout
                 android:hint="width"
                 android:layout_weight="1"
+                android:gravity="center"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etWidth"
+                    android:inputType="number"
+                    android:gravity="center"
+                    android:layout_weight="1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
                 android:gravity="center"
@@ -41,17 +47,25 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
-        <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/etHeight"
-                android:inputType="number"
-                android:gravity="center"
+        <com.google.android.material.textfield.TextInputLayout
                 android:hint="height"
                 android:layout_weight="1"
+                android:gravity="center"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etHeight"
+                    android:inputType="number"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btGenerate"
+                android:background="@color/colorPrimary"
                 android:text="generate"
                 android:gravity="center"
                 android:layout_weight="1"

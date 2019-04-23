@@ -21,6 +21,7 @@ class PixelImage : View {
     }
 
     private val drawPaint = Paint()
+    private val drawExecutor = Executors.newSingleThreadExecutor()
 
     private var speed = 0
 
@@ -59,8 +60,6 @@ class PixelImage : View {
     fun setSpeed(speed: Int) {
         this.speed = speed * 10
     }
-
-    private val drawExecutor = Executors.newSingleThreadExecutor()
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event?.action == MotionEvent.ACTION_UP) {
